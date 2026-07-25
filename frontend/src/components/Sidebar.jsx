@@ -1,5 +1,6 @@
-import { ClipboardList, History, LogOut, TrainTrack, Users, X } from "lucide-react";
+import { ClipboardList, History, LogOut, Users, X } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
+import logo from "../assets/konkan-railway-logo.svg";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const navItems = [
@@ -40,9 +41,7 @@ export default function Sidebar({ open, onClose }) {
       >
         <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold-gradient shadow-card">
-              <TrainTrack className="h-5 w-5 text-navy-900" strokeWidth={2.25} />
-            </div>
+            <img src={logo} alt="Konkan Railway" className="h-10 w-10 shrink-0 rounded-xl shadow-card" />
             <div className="leading-tight">
               <div className="text-sm font-semibold">Konkan Railway</div>
               <div className="text-[11px] text-navy-100">Corporation Limited</div>

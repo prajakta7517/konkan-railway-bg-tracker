@@ -1,5 +1,6 @@
-import { Bell, FileStack, ShieldCheck, TrainTrack } from "lucide-react";
+import { Bell, FileStack, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
+import logo from "../assets/konkan-railway-logo.svg";
 
 const features = [
   {
@@ -35,9 +36,7 @@ export default function Landing() {
         />
         <header className="relative mx-auto max-w-6xl px-6 py-5 sm:px-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-gradient shadow-card">
-              <TrainTrack className="h-5 w-5 text-navy-900" strokeWidth={2.25} />
-            </div>
+            <img src={logo} alt="Konkan Railway" className="h-10 w-10 rounded-xl shadow-card" />
             <span className="text-lg font-semibold">Konkan Railway Corporation Limited</span>
           </div>
         </header>
