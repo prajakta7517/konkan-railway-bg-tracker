@@ -121,10 +121,15 @@ Steps:
    python -m scripts.create_admin
    ```
    to create the first Admin account.
-5. Because the backend is on Render's free tier, it spins down after 15
-   minutes of inactivity — the first request after idle takes ~30-50s. The
-   Cron Job runs as its own scheduled process, so daily expiry emails still
-   fire on time regardless of whether the web service is awake.
+5. Because the backend and frontend are on Render's free instance type, the
+   backend spins down after 15 minutes of inactivity — the first request
+   after idle takes ~30-50s. The Cron Job runs as its own scheduled process,
+   so daily expiry emails still fire on time regardless of whether the web
+   service is awake.
+6. Note: Render's `free` instance type isn't available for Cron Jobs (only
+   for Web Services and Static Sites), so `render.yaml` sets the cron job's
+   `plan` to `starter`. It's billed per second of actual run time — a job
+   this small (a few seconds once a day) costs roughly $1/month, not $0.
 
 ---
 
