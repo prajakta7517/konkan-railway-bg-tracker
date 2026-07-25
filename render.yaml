@@ -32,22 +32,12 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
-      - key: MAIL_USERNAME
-        sync: false
-      - key: MAIL_PASSWORD
+      - key: BREVO_API_KEY
         sync: false
       - key: MAIL_FROM
         sync: false
       - key: MAIL_FROM_NAME
         value: Konkan Railway Corporation Limited
-      - key: MAIL_SERVER
-        value: smtp.gmail.com
-      - key: MAIL_PORT
-        value: "587"
-      - key: MAIL_STARTTLS
-        value: "true"
-      - key: MAIL_SSL_TLS
-        value: "false"
       - key: FRONTEND_URL
         sync: false
       - key: CORS_ORIGINS
@@ -98,19 +88,9 @@ services:
         value: konkan_railway_bg
       - key: JWT_SECRET
         sync: false
-      - key: MAIL_USERNAME
-        sync: false
-      - key: MAIL_PASSWORD
+      - key: BREVO_API_KEY
         sync: false
       - key: MAIL_FROM
         sync: false
       - key: MAIL_FROM_NAME
         value: Konkan Railway Corporation Limited
-      - key: MAIL_SERVER
-        value: smtp.gmail.com
-      - key: MAIL_PORT
-        value: "587"
-      - key: MAIL_STARTTLS
-        value: "true"
-      - key: MAIL_SSL_TLS
-        value: "false"

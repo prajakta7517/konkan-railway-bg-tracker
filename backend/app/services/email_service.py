@@ -1,37 +1,44 @@
+import json
 import logging
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import urllib.error
+import urllib.request
 
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
+BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
+
 
 def send_email(to_email: str, subject: str, html_content: str) -> tuple[bool, str | None]:
     settings = get_settings()
-    if not settings.mail_username or not settings.mail_password:
-        logger.warning("Mail credentials not configured; skipping email send to %s", to_email)
-        return False, "Mail credentials not configured"
+    if not settings.brevo_api_key:
+        logger.warning("Brevo API key not configured; skipping email send to %s", to_email)
+        return False, "Brevo API key not configured"
 
-    message = MIMEMultipart("alternative")
-    message["Subject"] = subject
-    message["From"] = f"{settings.mail_from_name} <{settings.mail_from}>"
-    message["To"] = to_email
-    message.attach(MIMEText(html_content, "html"))
-
+    payload = {
+        "sender": {"name": settings.mail_from_name, "email": settings.mail_from},
+        "to": [{"email": to_email}],
+        "subject": subject,
+        "htmlContent": html_content,
+    }
+    request = urllib.request.Request(
+        BREVO_API_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "api-key": settings.brevo_api_key,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
     try:
-        if settings.mail_ssl_tls:
-            server = smtplib.SMTP_SSL(settings.mail_server, settings.mail_port, timeout=15)
-        else:
-            server = smtplib.SMTP(settings.mail_server, settings.mail_port, timeout=15)
-
-        with server:
-            if settings.mail_starttls and not settings.mail_ssl_tls:
-                server.starttls()
-            server.login(settings.mail_username, settings.mail_password)
-            server.sendmail(settings.mail_from, [to_email], message.as_string())
-        return True, None
+        with urllib.request.urlopen(request, timeout=15):
+            return True, None
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        logger.error("Brevo API error sending to %s: %s %s", to_email, exc.code, body)
+        return False, f"Brevo API error {exc.code}: {body}"
     except Exception as exc:  # noqa: BLE001
         logger.exception("Failed to send email to %s", to_email)
         return False, str(exc)

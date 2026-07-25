@@ -9,7 +9,8 @@ contractors, with automated expiry email alerts.
 - **Backend:** FastAPI (Python)
 - **Database:** MongoDB Atlas
 - **File storage:** Cloudinary
-- **Email:** Gmail SMTP (via an app password)
+- **Email:** Brevo transactional email API (HTTPS — works on Render's free
+  tier, which blocks raw SMTP ports 25/465/587)
 - **Auth:** JWT in httpOnly cookies, bcrypt password hashing
 - **Hosting:** Render (Web Service + Static Site + Cron Job)
 
@@ -37,7 +38,7 @@ Fill in `.env`:
 - `MONGODB_URI` — connection string from MongoDB Atlas (see below)
 - `JWT_SECRET` — any long random string
 - `CLOUDINARY_*` — from your Cloudinary dashboard
-- `MAIL_*` — Gmail address + a Google Account App Password (see below); leave blank to disable email sending locally — the app logs a warning instead of failing
+- `BREVO_API_KEY` / `MAIL_FROM` — from Brevo (see below); leave `BREVO_API_KEY` blank to disable email sending locally — the app logs a warning instead of failing
 - `FIRST_ADMIN_EMAIL` / `FIRST_ADMIN_PASSWORD` — used once to bootstrap the first Admin
 
 Create the first Admin user, then run the API:
@@ -83,14 +84,17 @@ python -m scripts.expiry_check
 2. From the dashboard, copy Cloud Name, API Key, and API Secret into the
    `CLOUDINARY_*` env vars.
 
-### Gmail SMTP
-1. Enable 2-Step Verification on the Google account you want to send from.
-2. Create an App Password at https://myaccount.google.com/apppasswords
-   (choose "Mail" as the app) — this becomes `MAIL_PASSWORD` (NOT your normal
-   Gmail password).
-3. Set `MAIL_USERNAME` and `MAIL_FROM` to that Gmail address.
-4. Gmail's free SMTP relay caps at ~500 emails/day, which is well above what
-   this system's daily countdown alerts will ever send for an internal team.
+### Brevo (email)
+1. Sign up free at https://www.brevo.com (300 emails/day, no credit card).
+2. Under **Senders, Domains & Dedication > Senders**, add and verify the email
+   address you want to send from (a confirmation link is emailed to it) — set
+   that same address as `MAIL_FROM`. Only the sender needs verifying; you can
+   send to any recipient once it's confirmed, no domain setup required.
+3. Under **Settings > SMTP & API > API Keys**, create a new API key and set
+   it as `BREVO_API_KEY`.
+4. Note: Render's free web services block outbound SMTP entirely (ports
+   25/465/587), which is why this app calls Brevo's HTTPS API directly
+   instead of using SMTP — it works on the free tier as a result.
 
 ---
 
@@ -107,20 +111,26 @@ Steps:
 2. In Render, choose **New > Blueprint** and point it at the repo — it will
    read `render.yaml` and create all three services.
 3. Fill in the env vars marked `sync: false` in the Render dashboard for each
-   service (Mongo URI, Cloudinary keys, Gmail `MAIL_USERNAME`/`MAIL_PASSWORD`/
-   `MAIL_FROM`, `FRONTEND_URL`, `CORS_ORIGINS`, helpdesk contact info,
-   first-admin bootstrap credentials).
-   - `CORS_ORIGINS` on the backend must equal the frontend's Render URL.
+   service (Mongo URI, Cloudinary keys, `BREVO_API_KEY`/`MAIL_FROM`,
+   `FRONTEND_URL`, `CORS_ORIGINS`, helpdesk contact info, first-admin
+   bootstrap credentials). **Type these values directly rather than pasting**
+   — a stray whitespace/tab character from a copy-paste can silently break a
+   URL field (Vite bakes `VITE_*` vars into the build at build time, so a
+   bad value there requires a rebuild to fix, not just a restart).
+   - `CORS_ORIGINS` on the backend must equal the frontend's Render URL
+     exactly (no trailing slash) — a mismatch here fails silently as a CORS
+     error in the browser console, not a 401.
    - `VITE_API_URL` on the frontend must equal the backend's Render URL.
    - The Cron Job's `JWT_SECRET` should match the Web Service's `JWT_SECRET`
      if you want tokens to remain valid across both (not strictly required —
      the cron job doesn't issue or verify tokens today).
-4. After the backend's first deploy, open a shell for that service in Render
-   (or run once locally against the Atlas cluster) and run:
+4. Render's **Shell** access requires a paid instance type — it's not
+   available on the free web service. To create the first Admin account,
+   run this locally instead (against the same `MONGODB_URI` your Render
+   backend uses):
    ```bash
    python -m scripts.create_admin
    ```
-   to create the first Admin account.
 5. Because the backend and frontend are on Render's free instance type, the
    backend spins down after 15 minutes of inactivity — the first request
    after idle takes ~30-50s. The Cron Job runs as its own scheduled process,

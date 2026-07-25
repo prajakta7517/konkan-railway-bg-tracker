@@ -23,15 +23,11 @@ class Settings(BaseSettings):
     cloudinary_api_key: str = ""
     cloudinary_api_secret: str = ""
 
-    # Email (Gmail SMTP, or any SMTP provider)
-    mail_username: str = ""
-    mail_password: str = ""
+    # Email (Brevo transactional email API — HTTPS, works on Render's free tier
+    # unlike raw SMTP, which free web services block on ports 25/465/587)
+    brevo_api_key: str = ""
     mail_from: str = "noreply@example.com"
     mail_from_name: str = "Konkan Railway Corporation Limited"
-    mail_server: str = "smtp.gmail.com"
-    mail_port: int = 587
-    mail_starttls: bool = True
-    mail_ssl_tls: bool = False
 
     # URLs
     frontend_url: str = "http://localhost:5173"
