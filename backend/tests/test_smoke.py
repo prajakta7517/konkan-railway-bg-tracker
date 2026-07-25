@@ -144,6 +144,47 @@ async def test_full_flow(mock_db):
         assert resp.status_code == 403  # viewer cannot delete
 
 
+async def test_admin_can_delete_users_but_not_self(mock_db):
+    await _seed_admin(mock_db)
+    await _seed_viewer(mock_db)
+
+    async with await _client() as client:
+        resp = await client.post(
+            "/auth/login", json={"email": "admin@example.com", "password": "adminpass123"}
+        )
+        assert resp.status_code == 200
+        admin_id = resp.json()["id"]
+
+        users = await client.get("/users")
+        viewer_id = next(u["id"] for u in users.json() if u["email"] == "viewer@example.com")
+
+        # Admin cannot delete their own account
+        resp = await client.delete(f"/users/{admin_id}")
+        assert resp.status_code == 400
+
+        # Admin can delete another user
+        resp = await client.delete(f"/users/{viewer_id}")
+        assert resp.status_code == 204
+
+        users = await client.get("/users")
+        assert all(u["email"] != "viewer@example.com" for u in users.json())
+
+        # Deleting again 404s (already gone)
+        resp = await client.delete(f"/users/{viewer_id}")
+        assert resp.status_code == 404
+
+        await client.post("/auth/logout")
+
+        # Viewer cannot delete users at all
+        await _seed_viewer(mock_db)
+        resp = await client.post(
+            "/auth/login", json={"email": "viewer@example.com", "password": "viewerpass123"}
+        )
+        assert resp.status_code == 200
+        resp = await client.delete(f"/users/{admin_id}")
+        assert resp.status_code == 403
+
+
 async def test_forgot_and_reset_password(mock_db):
     await _seed_admin(mock_db)
 

@@ -1,6 +1,8 @@
-import { UserPlus, Users as UsersIcon } from "lucide-react";
+import { Trash2, UserPlus, Users as UsersIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import api, { getErrorMessage } from "../api/client.js";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const emptyForm = { email: "", password: "", full_name: "", role: "viewer" };
 
@@ -14,11 +16,13 @@ function initialsOf(name) {
 }
 
 export default function UserManagement() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(null);
 
   const fetchUsers = async () => {
     try {
@@ -67,6 +71,17 @@ export default function UserManagement() {
       fetchUsers();
     } catch (err) {
       setError(getErrorMessage(err));
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await api.delete(`/users/${deletingUser.id}`);
+      setDeletingUser(null);
+      fetchUsers();
+    } catch (err) {
+      setError(getErrorMessage(err));
+      setDeletingUser(null);
     }
   };
 
@@ -182,15 +197,38 @@ export default function UserManagement() {
                   </span>
                 </td>
                 <td className="px-3 py-2.5">
-                  <button onClick={() => toggleActive(u)} className="text-navy-700 hover:underline">
+                  <button
+                    onClick={() => toggleActive(u)}
+                    className="mr-3 text-navy-700 hover:underline"
+                  >
                     {u.is_active ? "Disable" : "Enable"}
                   </button>
+                  {u.id !== currentUser?.id && (
+                    <button
+                      onClick={() => setDeletingUser(u)}
+                      title="Delete user"
+                      className="inline-flex items-center text-red-600 hover:underline"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {deletingUser && (
+        <ConfirmDialog
+          title="Delete User"
+          message={`Are you sure you want to delete ${deletingUser.full_name} (${deletingUser.email})? This cannot be undone.`}
+          confirmLabel="Delete"
+          danger
+          onConfirm={handleDelete}
+          onCancel={() => setDeletingUser(null)}
+        />
+      )}
     </div>
   );
 }
