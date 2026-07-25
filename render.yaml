@@ -64,7 +64,6 @@ services:
   - type: web
     name: konkan-railway-bg-frontend
     runtime: static
-    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: frontend/dist
